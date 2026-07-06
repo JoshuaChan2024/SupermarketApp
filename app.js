@@ -35,22 +35,22 @@ app.get('/', (req, res) => {
         if (error) {
             console.error('Database query error: ', error.message);
             return res.send('Error Retrieving products');
-        } 
+        }
 
-        res.render('index', {products: results})
+        res.render('index', { products: results })
     })
 })
 
 app.get('/product/:id', (req, res) => {
     const productId = req.params.id;
-    
+
     const sql = 'SELECT * FROM products WHERE productId = ?';
 
     connection.query(sql, [productId], (error, results) => {
         if (error) {
             console.error('Database query error:', error.message);
             return res.send('Error Retrieving product by ID');
-        } 
+        }
 
         if (results.length > 0) {
             res.render('product', { product: results[0] });
@@ -67,12 +67,65 @@ app.get('/addProduct', (req, res) => {
 app.post('/addProduct', (req, res) => {
     const { name, quantity, price, image } = req.body;
     const sql = 'INSERT INTO products (productName, quantity, price, image) VALUES (?, ?, ?, ?)';
-    
+
     connection.query(sql, [name, quantity, price, image], (error, results) => {
         if (error) {
             console.error("Error adding product:", error);
             res.send('Error adding product');
         } else {
+            res.redirect('/')
+        }
+    });
+});
+
+app.get('/editProduct/:id', (req, res) => {
+    const productId = req.params.id;
+    const sql = 'SELECT * FROM products WHERE productId = ?';
+
+    connection.query(sql, [productId], (error, results) => {
+        if (error) {
+            console.error('Database query error:', error.message);
+            return res.send('Error retrieving product by ID');
+        }
+        // Check if any product with the given ID was found
+        if (results.length > 0) {
+            // Render HTML page with the product data
+            res.render('editProduct', { product: results[0] });
+        } else {
+            // If no product with the given ID was found, render a 404 page or handle it accordingly
+            res.send('Product not found');
+        }
+    });
+});
+
+app.post('/editProduct/:id', (req, res) => {
+    const productId = req.params.id;
+    const { name, quantity, price } = req.body;
+    const sql = 'UPDATE products SET productName = ?, quantity = ?, price = ? WHERE productId = ?';
+
+    // Insert the new product into the database
+    connection.query(sql, [name, quantity, price, productId], (error, results) => {
+        if (error) {
+            // Handle any error that occurs during the database operation
+            console.error("Error updating product:", error);
+            res.send('Error updating product');
+        } else {
+            // Send a success response
+            res.redirect('/');
+        }
+    });
+});
+
+app.get('/deleteProduct/:id', (req, res) => {
+    const productId = req.params.id;
+    const sql = 'DELETE FROM products WHERE productId = ?';
+    connection.query(sql, [productId], (error, results) => {
+        if (error) {
+            // Handle any error that occurs during the database operation
+            console.error("Error deleting products:", error);
+            res.send('Error deleting product')
+        } else {
+            // Sends a success response
             res.redirect('/')
         }
     });
